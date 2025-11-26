@@ -55,6 +55,7 @@ sudo mv revlookup /usr/bin
 ```bash
 wget https://raw.githubusercontent.com/INTELEON404/RevLookup/main/revlookup -O revlookup
 chmod +x revlookup
+sudo mv revlookup /usr/bin
 ```
 
 Works on any Linux/macOS with Python 3.6+
@@ -66,28 +67,28 @@ Works on any Linux/macOS with Python 3.6+
 
 #### Single target (IP or domain)
 ```
-./revlookup -t google.com
-./revlookup -t 140.82.113.31
+revlookup -t google.com
+revlookup -t 140.82.113.31
 ```
 
 # Full CIDR range
 ```
-./revlookup -c 1.1.1.0/24
+revlookup -c 1.1.1.0/24
 ```
 
 #### From file (IPs, domains, CIDRs – all mixed)
 ```
-./revlookup -f targets.txt
+revlookup -f targets.txt
 ```
 
 #### Pro mode: unique + max threads + save
 ```
-./revlookup -f targets.txt -u -td 4000 -o hosts.txt
+revlookup -f targets.txt -u -td 4000 -o hosts.txt
 ```
 
 #### No banner (stealth)
 ```
-./revlookup -t 8.8.8.8 --silent
+revlookup -t 8.8.8.8 --silent
 ```
 
 ---
@@ -95,7 +96,7 @@ Works on any Linux/macOS with Python 3.6+
 ### Full Help Menu
 
 ```bash
-./revlookup -h
+revlookup -h
 ```
 
 ```
@@ -119,7 +120,8 @@ options:
 ### Example Output
 
 ```bash
-$ ./revlookup -t google.com
+┌──(inteleon㉿linux)-[~]
+└─$ revlookup -t google.com
 
 ┏━┓┏━╸╻ ╻╻ ┏━┓┏━┓╻┏ ╻ ╻┏━┓
 ┣┳┛┣╸ ┃┏┛┃ ┃ ┃┃ ┃┣┻┓┃ ┃┣━┛
@@ -132,10 +134,3 @@ fra16s62-in-f14.1e100.net
 mad08s15-in-f3.1e100.net
 ...
 ```
-
----
-
-**Made for hunters. Used by legends.**
-
-**INTELEON404** — BeHunt Elite | 2025  
-https://github.com/INTELEON404/RevLookup
