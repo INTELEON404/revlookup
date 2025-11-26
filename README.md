@@ -3,7 +3,7 @@
 ```
 ┏━┓┏━╸╻ ╻╻ ┏━┓┏━┓╻┏ ╻ ╻┏━┓
 ┣┳┛┣╸ ┃┏┛┃ ┃ ┃┃ ┃┣┻┓┃ ┃┣━┛
-╹┗╸┗━╸┗┛ ┗━╸┗━┛┗━┛╹ ╹┗━┛╹
+╹┗╸┗━╸┗┛ ┗━┗━┛┗━┛╹ ╹┗━┛╹
 ```
 
 **The fastest, cleanest, and most beautiful reverse DNS lookup tool ever made.**  
