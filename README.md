@@ -1,5 +1,4 @@
-```markdown
-# RevLookup v3.9 — Pure • Fast • Silent • Elite
+# RevLookup
 
 ```
 ┏━┓┏━╸╻ ╻╻  ┏━┓┏━┓╻┏ ╻ ╻┏━┓
