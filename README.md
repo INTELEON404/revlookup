@@ -62,21 +62,30 @@ Works on any Linux/macOS with Python 3.6+
 
 ### Usage Examples
 
-```bash
-# Single target (IP or domain)
+
+#### Single target (IP or domain)
+```
 ./revlookup -t google.com
 ./revlookup -t 140.82.113.31
+```
 
 # Full CIDR range
+```
 ./revlookup -c 1.1.1.0/24
+```
 
-# From file (IPs, domains, CIDRs – all mixed)
+#### From file (IPs, domains, CIDRs – all mixed)
+```
 ./revlookup -f targets.txt
+```
 
-# Pro mode: unique + max threads + save
+#### Pro mode: unique + max threads + save
+```
 ./revlookup -f targets.txt -u -td 4000 -o hosts.txt
+```
 
-# No banner (stealth)
+#### No banner (stealth)
+```
 ./revlookup -t 8.8.8.8 --silent
 ```
 
