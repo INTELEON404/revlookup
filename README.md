@@ -48,6 +48,7 @@ Zero bloat. Only resolved hostnames. Pure, instant output.
 git clone https://github.com/INTELEON404/RevLookup.git
 cd RevLookup
 chmod +x revlookup
+sudo mv revlookup /usr/bin
 ```
 
 #### Option 2 – One-liner (recommended)
