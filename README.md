@@ -3,98 +3,81 @@
 ```
 ┏━┓┏━╸╻ ╻╻  ┏━┓┏━┓╻┏ ╻ ╻┏━┓
 ┣┳┛┣╸ ┃┏┛┃  ┃ ┃┃ ┃┣┻┓┃ ┃┣━┛
-╹┗╸┗━╸┗┛ ┗━╸┗━┛┗━┛╹ ╹┗━┛╹ 
+╹┗╸┗━╸┗┛ ┗━╸┗━┛┗━┛╹ ╹┗━┛╹
 ```
 
-**The fastest, cleanest, and most beautiful reverse DNS lookup tool ever made.**  
-Zero bloat. Only resolved hostnames. Pure, instant output.
+**Fast, clean, multi-threaded reverse DNS lookup tool** – built for pure output and maximum usability.  
+No banners during scan (optional), no verbose noise. Just hostnames.
 
-**Original concept & first version:** HunterDep  
-**Completely rewritten, optimized & maintained by:** INTELEON404  
-**Version:** 2.1 (2025)  
-**GitHub:** https://github.com/INTELEON404/RevLookup
+**Original concept:** HunterDep  
+**Fully rewritten, optimized & maintained by:** INTELEON404  
+**Current version:** **2.3** (November 2025)  
+**Language:** Python 3.6+  
 
----
+[![Python 3.6+](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-### Why RevLookup v2.1 Crushes Everything Else
+## Highlights
 
-| Feature                          | RevLookup v2.1                          | Others                     |
-|----------------------------------|------------------------------------------|----------------------------|
-| Speed                            | Up to **5000 threads**                   | Usually < 500             |
-| Output                           | **Only hostnames** – no garbage          | Verbose logs & IPs        |
-| Input flexibility                | IPs, domains, CIDRs, files (mixed)       | Limited formats           |
-| Deduplication                    | Instant `-u` flag                        | Manual post-processing    |
-| Single binary / No dependencies  | Yes (pure Python + standard lib)         | Often requires install    |
+| Feature                     | RevLookup v2.3                          |
+|-----------------------------|-----------------------------------------|
+| Threading                   | Up to **5000** concurrent threads       |
+| Output                      | Hostnames only (clean)                  |
+| Input types                 | IP • Domain • CIDR • File (mixed)       |
+| Unique filtering            | `-u` (optional)                         |
+| File output                 | `-o filename`                           |
+| Banner                      | Shown by default • disable with `--silent` |
+| Dependencies                | Standard library + `pyfiglet` only      |
 
----
+## Features
 
-### Features
+- Blazing-fast multi-threaded reverse DNS lookups
+- Flexible thread control (`-td N`, max 5000)
+- Supports single targets, full CIDR ranges, or mixed input files
+- Optional unique hostname deduplication
+- Zero bloat – lightweight and dependency-minimal
+- Clean, distraction-free output
 
-- ⚡ Lightning-fast multi-threaded reverse DNS (up to **5000 threads**)
-- Accepts **IPs**, **domains**, or **entire CIDR ranges**
-- Load targets from file (mix IPs, domains, CIDRs freely)
-- `-u` → instantly remove duplicate hostnames
-- `-td N` → control threads (default: 1000)
-- `-o` → save results to file
-- **Pure output** – nothing but resolved hostnames
-- Gorgeous ASCII banner (disable with `--silent` if needed)
+## Installation
 
----
-
-### Installation (Zero Dependencies)
-
-#### Option 1 – Clone repository
+### Option 1: Clone the repository
 ```bash
 git clone https://github.com/INTELEON404/RevLookup.git
 cd RevLookup
 chmod +x revlookup
-sudo mv revlookup /usr/bin
+sudo mv revlookup /usr/local/bin/
 ```
 
-#### Option 2 – One-liner (recommended)
+### Option 2: One-liner (single file)
 ```bash
 wget https://raw.githubusercontent.com/INTELEON404/RevLookup/main/revlookup -O revlookup
 chmod +x revlookup
-sudo mv revlookup /usr/bin
+sudo mv revlookup /usr/local/bin/
 ```
 
-Works on any Linux/macOS with Python 3.6+
+**Requirements:** Python 3.6 or higher
 
----
+## Usage Examples
 
-### Usage Examples
-
-
-#### Single target (IP or domain)
-```
+```bash
+# Single IP or domain
 revlookup -t google.com
-revlookup -t 140.82.113.31
-```
+revlookup -t 1.1.1.1
 
 # Full CIDR range
-```
-revlookup -c 1.1.1.0/24
-```
+revlookup -c 13.35.0.0/16
 
-#### From file (IPs, domains, CIDRs – all mixed)
-```
+# From file (supports mixed IPs/domains/CIDRs)
 revlookup -f targets.txt
-```
 
-#### Pro mode: unique + max threads + save
-```
-revlookup -f targets.txt -u -td 4000 -o hosts.txt
-```
+# Max performance + unique results + save output
+revlookup -f targets.txt -u -td 4000 -o hostnames.txt
 
-#### No banner (stealth)
-```
+# No banner (quiet mode)
 revlookup -t 8.8.8.8 --silent
 ```
 
----
-
 ### Full Help Menu
-
 ```bash
 revlookup -h
 ```
@@ -102,29 +85,24 @@ revlookup -h
 ```
 usage: revlookup (-t TARGET | -f FILE | -c CIDR) [-o OUTPUT] [-u] [-td N] [--silent] [-h]
 
-RevLookup v3.9 — Pure Results Only
-
 options:
   -t, --target TARGET      Single IP or domain
   -f, --file FILE          File with targets (one per line)
-  -c, --cidr CIDR          CIDR range (e.g. 192.168.1.0/24)
+  -c, --cidr CIDR          CIDR range (e.g. 192.168.0.0/16)
   -o, --output OUTPUT      Save results to file
-  -u, --unique             Show only unique hostnames
-  -td, --threads N         Max threads (default: 1000, max: 5000)
-  --silent                 Hide banner
-  -h, --help               Show this help message
+  -u, --unique             Output only unique hostnames
+  -td, --threads N         Number of threads (default: 1000, max: 5000)
+  --silent                 Suppress banner
+  -h, --help               Show this help message and exit
 ```
 
----
-
-### Example Output
+## Example Output
 
 ```bash
-┌──(inteleon㉿linux)-[~]
-└─$ revlookup -t google.com
+$ revlookup -t google.com
 
-┏━┓┏━╸╻ ╻╻ ┏━┓┏━┓╻┏ ╻ ╻┏━┓
-┣┳┛┣╸ ┃┏┛┃ ┃ ┃┃ ┃┣┻┓┃ ┃┣━┛
+┏━┓┏━╸╻ ╻╻  ┏━┓┏━┓╻┏ ╻ ╻┏━┓
+┣┳┛┣╸ ┃┏┛┃  ┃ ┃┃ ┃┣┻┓┃ ┃┣━┛
 ╹┗╸┗━╸┗┛ ┗━╸┗━┛┗━┛╹ ╹┗━┛╹
 
 hkg07s52-in-f14.1e100.net
@@ -132,5 +110,17 @@ lga34s22-in-f4.1e100.net
 syd09s23-in-f14.1e100.net
 fra16s62-in-f14.1e100.net
 mad08s15-in-f3.1e100.net
-...
 ```
+
+## Contributing
+
+Pull requests are welcome! For major changes, please open an issue first.
+
+## License
+
+[MIT License](LICENSE) © 2025 INTELEON404
+
+---
+
+**Star this repo if you find it useful!** 🚀  
+GitHub: https://github.com/INTELEON404/RevLookup
