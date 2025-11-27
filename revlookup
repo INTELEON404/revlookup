@@ -46,7 +46,7 @@ parser.add_argument("-t", "--target", type=str, help="Single IP or domain")
 parser.add_argument("-f", "--file", type=str, help="File with IPs/domains/CIDRs")
 parser.add_argument("-c", "--cidr", type=str, help="CIDR range (ex: 13.35.0.0/16)")
 parser.add_argument("-o", "--output", type=str, help="Save results to file")
-parser.add_argument("-td", "--threads", type=int, default=1337, help="Max threads (default: 1337)")
+parser.add_argument("-td", "--threads", type=int, default=80, help="Max threads (default: 80)")
 parser.add_argument("-s", "--silent", action="store_true", help="No banner")
 parser.add_argument("-h", "--help", action="help", 
                     help="Show this help message and exit")
