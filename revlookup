@@ -23,7 +23,6 @@ def banner():
     print("\033[93m          [+] Version: 2.3")
     print("          [+] Mod by: INTELEON404")
     print("          [+] GitHub: https://github.com/INTELEON404\n")
-    print("      \033[97mBrutal. Fast. Unstoppable.\033[0m")
     time.sleep(1.5)
 
 def rev(ip: str):
@@ -36,7 +35,7 @@ def rev(ip: str):
     except:
         pass
 
-# =================== ARGPARSE (PERFECT) ===================
+# =================== ARGPARSE ===================
 parser = argparse.ArgumentParser(
     description="RevLookup v2.3 - INTELEON404",
     formatter_class=argparse.RawTextHelpFormatter
@@ -66,7 +65,7 @@ if sum(bool(x) for x in [args.target, args.file, args.cidr]) != 1:
     print("\033[91m[!] Use exactly one: -t | -f | -c\033[0m")
     sys.exit(1)
 
-# Thread limit – ALWAYS args.threads
+# Thread handling
 max_threads = max(1, min(5000, args.threads))
 sem = threading.Semaphore(max_threads)
 threads = []
@@ -83,7 +82,7 @@ if args.target:
         threads.append(t)
     else:
         try:
-            ips = socket.gethostbyname509_ex(args.target)[2]
+            ips = socket.gethostbyname_ex(args.target)[2]  # FIXED
             for ip in ips:
                 t = threading.Thread(target=start, args=(ip,), daemon=True)
                 t.start()
