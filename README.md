@@ -10,7 +10,7 @@
 No banners during scan (optional), no verbose noise. Just hostnames.
 
 **Original concept:** [HunterDep](https://github.com/yHunterDep).
-**Fully rewritten, optimized & maintained by:** [INTELEON404](https://github.com/INTELEON404)  
+**Fully rewritten, optimized by:** [INTELEON404](https://github.com/INTELEON404)  
 **Current version:** **2.3** (November 2025)  
 **Language:** Python 3.6+  
 
