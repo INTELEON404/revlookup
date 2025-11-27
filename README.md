@@ -11,14 +11,14 @@ Zero bloat. Only resolved hostnames. Pure, instant output.
 
 **Original concept & first version:** HunterDep  
 **Completely rewritten, optimized & maintained by:** INTELEON404  
-**Version:** 3.9 (2025)  
+**Version:** 2.1 (2025)  
 **GitHub:** https://github.com/INTELEON404/RevLookup
 
 ---
 
-### Why RevLookup v3.9 Crushes Everything Else
+### Why RevLookup v2.1 Crushes Everything Else
 
-| Feature                          | RevLookup v3.9                          | Others                     |
+| Feature                          | RevLookup v2.1                          | Others                     |
 |----------------------------------|------------------------------------------|----------------------------|
 | Speed                            | Up to **5000 threads**                   | Usually < 500             |
 | Output                           | **Only hostnames** – no garbage          | Verbose logs & IPs        |
