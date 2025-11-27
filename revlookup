@@ -25,7 +25,7 @@ def rev(ip):
         pass
 
 # =================== Args ===================
-parser = argparse.ArgumentParser(description="RevLookup v3.0 - INTELEON404")
+parser = argparse.ArgumentParser(description="RevLookup v2.1 - INTELEON404")
 parser.add_argument("-t", "--target", help="Single IP or domain (ex: 1.1.1.1 or google.com)")
 parser.add_argument("-f", "--file", help="File with IPs, domains or CIDRs (one per line)")
 parser.add_argument("-c", "--cidr", help="CIDR range (ex: 192.168.1.0/24)")
