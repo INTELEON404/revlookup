@@ -1,18 +1,29 @@
 #!/usr/bin/env python3
 """
-RevLookup v2.1 - INTELEON404 
+RevLookup v2.2 - INTELEON404
 GitHub: https://github.com/INTELEON404
 """
-import threading, argparse, pyfiglet, ipaddress, socket, re, time
+import threading
+import argparse
+import ipaddress
+import socket
+import re
+import time
 from pathlib import Path
+
+# Pagga font = raw power
+from pyfiglet import Figlet
+f = Figlet(font='pagga')
+banner_text = f.renderText("RevLookup")
 
 def banner():
     print("\033[96m")
-    print(pyfiglet.figlet_format("RevLookup"))
-    print("\033[93m[+] Version: 2.1")
-    print("[+] Mod by: INTELEON404")
-    print("[+] GitHub: https://github.com/INTELEON404\n")
-    time.sleep(1.5)
+    print(banner_text)
+    print("\033[93m          [+] Version: 2.2")
+    print("          [+] Mod by: INTELEON404")
+    print("          [+] GitHub: https://github.com/INTELEON404\n")
+    print("      \033[97mBrutal. Fast. Unstoppable.\033[0m")
+    time.sleep(1.8)
 
 def rev(ip):
     try:
@@ -25,12 +36,12 @@ def rev(ip):
         pass
 
 # =================== Args ===================
-parser = argparse.ArgumentParser(description="RevLookup v2.1 - INTELEON404")
-parser.add_argument("-t", "--target", help="Single IP or domain (ex: 1.1.1.1 or google.com)")
-parser.add_argument("-f", "--file", help="File with IPs, domains or CIDRs (one per line)")
-parser.add_argument("-c", "--cidr", help="CIDR range (ex: 192.168.1.0/24)")
-parser.add_argument("-o", "--output", help="Save results to file")
-parser.add_argument("-td", "--threads", type=int, default=1000, help="Max threads (default: 1000)")
+parser = argparse.ArgumentParser(description="RevLookup v2.2 - INTELEON404")
+parser.add_argument("-t", "--target", help="Single IP or domain")
+parser.add_argument("-f", "--file", help="File with IPs/domains/CIDRs")
+parser.add_argument("-c", "--cidr", help="CIDR range (ex: 1.1.1.1/24)")
+parser.add_argument("-o", "--output", help="Save results")
+parser.add_argument("-td", "--threads", type=int, default=1337, help="Max threads (default: 1337)")
 parser.add_argument("-s", "--silent", action="store_true", help="No banner")
 args = parser.parse_args()
 
@@ -40,7 +51,7 @@ if not args.silent:
     banner()
 
 if sum(bool(x) for x in [args.target, args.file, args.cidr]) != 1:
-    print("\033[91m[!] Use only one: -t / -f / -c\033[0m")
+    print("\033[91m[!] Use only one input: -t | -f | -c\033[0m")
     exit()
 
 max_threads = max(1, min(5000, args.td))
@@ -51,10 +62,13 @@ def start(ip):
     with sem:
         rev(ip)
 
-# =================== Single target ===================
+# =================== Input handlers ===================
 if args.target:
-    # Auto-resolve domain → IP(s)
-    if not re.match(r"^\d+\.\d+\.\d+\.\d+$", args.target):
+    if re.match(r"^\d{1,3}(\.\d{1,3}){3}$", args.target):
+        t = threading.Thread(target=start, args=(args.target,))
+        t.start()
+        threads.append(t)
+    else:
         try:
             ips = socket.gethostbyname_ex(args.target)[2]
             for ip in ips:
@@ -62,13 +76,8 @@ if args.target:
                 t.start()
                 threads.append(t)
         except:
-            print(f"\033[91m[!] Cannot resolve: {args.target}\033[0m")
-    else:
-        t = threading.Thread(target=start, args=(args.target,))
-        t.start()
-        threads.append(t)
+            print(f"\033[91m[!] Failed to resolve: {args.target}\033[0m")
 
-# =================== CIDR ===================
 elif args.cidr:
     try:
         net = ipaddress.ip_network(args.cidr, strict=False)
@@ -80,7 +89,6 @@ elif args.cidr:
         print("\033[91m[!] Invalid CIDR\033[0m")
         exit()
 
-# =================== File input ===================
 elif args.file:
     path = Path(args.file)
     if not path.exists():
@@ -92,7 +100,7 @@ elif args.file:
         if not line or line.startswith("#"):
             continue
 
-        if "/" in line:  # CIDR in file
+        if "/" in line:
             try:
                 net = ipaddress.ip_network(line, strict=False)
                 for ip in net.hosts():
@@ -102,14 +110,13 @@ elif args.file:
             except:
                 continue
         else:
-            # IP or domain
             t = threading.Thread(target=start, args=(line,))
             t.start()
             threads.append(t)
 
-# =================== Wait & finish ===================
+# =================== Finish ===================
 for t in threads:
     t.join()
 
-print("\n\033[96m[+] Done. All hosts resolved.\033[0m")
+print("\n\033[96m[+] Mission complete.\033[0m")
 print("\033[93m    ~ INTELEON404\033[0m")
