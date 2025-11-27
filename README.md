@@ -9,8 +9,8 @@
 **Fast, clean, multi-threaded reverse DNS lookup tool** – built for pure output and maximum usability.  
 No banners during scan (optional), no verbose noise. Just hostnames.
 
-**Original concept:** HunterDep  
-**Fully rewritten, optimized & maintained by:** INTELEON404  
+**Original concept:** [HunterDep](https://github.com/yHunterDep)
+**Fully rewritten, optimized & maintained by:** [INTELEON404](https://github.com/INTELEON404)  
 **Current version:** **2.3** (November 2025)  
 **Language:** Python 3.6+  
 
