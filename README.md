@@ -17,7 +17,7 @@ No banners during scan (optional), no verbose noise. Just hostnames.
 
 **Original concept:** [HunterDep](https://github.com/yHunterDep).
 **Fully rewritten, optimized by:** [INTELEON404](https://github.com/INTELEON404)  
-**Current version:** **2.3** (November 2025)  
+**Current version:** **1.2** (November 2025)  
 **Language:** Python 3.6+  
 
 [![Python 3.6+](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/)
@@ -25,7 +25,7 @@ No banners during scan (optional), no verbose noise. Just hostnames.
 
 ## Highlights
 
-| Feature                     | RevLookup v2.3                          |
+| Feature                     | RevLookup v1.2                        |
 |-----------------------------|-----------------------------------------|
 | Threading                   | Up to **5000** concurrent threads       |
 | Output                      | Hostnames only (clean)                  |
