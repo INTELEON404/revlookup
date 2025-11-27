@@ -1,10 +1,16 @@
-# RevLookup
+<div align="center">
+  <img src="https://github.com/INTELEON404/Template/blob/main/reLookup.png" alt="Logo" />
+</div>
 
+## REVLOOKUP — HUNTER EDITION
+
+```ascii
+░█▀▄░█▀▀░█░█░█░░░█▀█░█▀█░█░█░█░█░█▀█
+░█▀▄░█▀▀░▀▄▀░█░░░█░█░█░█░█▀▄░█░█░█▀▀
+░▀░▀░▀▀▀░░▀░░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀▀▀░▀░░
 ```
-┏━┓┏━╸╻ ╻╻  ┏━┓┏━┓╻┏ ╻ ╻┏━┓
-┣┳┛┣╸ ┃┏┛┃  ┃ ┃┃ ┃┣┻┓┃ ┃┣━┛
-╹┗╸┗━╸┗┛ ┗━╸┗━┛┗━┛╹ ╹┗━┛╹
-```
+
+---
 
 **Fast, clean, multi-threaded reverse DNS lookup tool** – built for pure output and maximum usability.  
 No banners during scan (optional), no verbose noise. Just hostnames.
