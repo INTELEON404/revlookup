@@ -13,9 +13,9 @@ import sys
 from pathlib import Path
 from pyfiglet import Figlet
 
-# === Pagga Font - Pure Aggression ===
+# === Pagga Font – Raw Power ===
 f = Figlet(font='pagga')
-banner_text = f.renderText("RevLookup")
+banner_text = f.renderText("RevLookUp")
 
 def banner():
     print("\033[96m")
@@ -23,6 +23,7 @@ def banner():
     print("\033[93m          [+] Version: 2.3")
     print("          [+] Mod by: INTELEON404")
     print("          [+] GitHub: https://github.com/INTELEON404\n")
+    print("      \033[97mBrutal. Fast. Unstoppable.\033[0m")
     time.sleep(1.5)
 
 def rev(ip: str):
@@ -35,11 +36,10 @@ def rev(ip: str):
     except:
         pass
 
-# =================== ARGPARSE (100% FIXED) ===================
+# =================== ARGPARSE (PERFECT) ===================
 parser = argparse.ArgumentParser(
     description="RevLookup v2.3 - INTELEON404",
-    formatter_class=argparse.RawTextHelpFormatter,
-    add_help=False
+    formatter_class=argparse.RawTextHelpFormatter
 )
 
 parser.add_argument("-t", "--target", type=str, help="Single IP or domain")
@@ -48,12 +48,11 @@ parser.add_argument("-c", "--cidr", type=str, help="CIDR range (ex: 13.35.0.0/16
 parser.add_argument("-o", "--output", type=str, help="Save results to file")
 parser.add_argument("-td", "--threads", type=int, default=1337, help="Max threads (default: 1337)")
 parser.add_argument("-s", "--silent", action="store_true", help="No banner")
-parser.add_argument("-h", "--help", action="help", help="Show this help message and exit")
 
 args = parser.parse_args()
 
-# Show help if no arguments
-if len(sys.argv) == 1 or args.help:
+# === Show help if no args or explicit -h / --help ===
+if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
     parser.print_help()
     sys.exit(0)
 
@@ -67,7 +66,7 @@ if sum(bool(x) for x in [args.target, args.file, args.cidr]) != 1:
     print("\033[91m[!] Use exactly one: -t | -f | -c\033[0m")
     sys.exit(1)
 
-# === FIXED: Always use args.threads (never args.td) ===
+# Thread limit – ALWAYS args.threads
 max_threads = max(1, min(5000, args.threads))
 sem = threading.Semaphore(max_threads)
 threads = []
@@ -84,19 +83,19 @@ if args.target:
         threads.append(t)
     else:
         try:
-            ips = socket.gethostbyname_ex(args.target)[2]
+            ips = socket.gethostbyname509_ex(args.target)[2]
             for ip in ips:
                 t = threading.Thread(target=start, args=(ip,), daemon=True)
                 t.start()
                 threads.append(t)
         except:
-            print(f"\033[91m[!] Cannot resolve domain: {args.target}\033[0m")
+            print(f"\033[91m[!] Cannot resolve: {args.target}\033[0m")
 
 elif args.cidr:
     try:
         net = ipaddress.ip_network(args.cidr, strict=False)
-        total_hosts = net.num_addresses - 2 if net.num_addresses > 2 else 0
-        print(f"\033[93m[+] Scanning {total_hosts:,} hosts in {args.cidr}...\033[0m\n")
+        total = net.num_addresses - 2 if net.num_addresses > 2 else 0
+        print(f"\033[93m[+] Scanning {total:,} hosts in {args.cidr}...\033[0m\n")
         for ip in net.hosts():
             t = threading.Thread(target=start, args=(str(ip),), daemon=True)
             t.start()
@@ -129,7 +128,7 @@ elif args.file:
             t.start()
             threads.append(t)
 
-# =================== Wait for all threads ===================
+# =================== Finish ===================
 for t in threads:
     t.join()
 
