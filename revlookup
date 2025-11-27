@@ -1,130 +1,115 @@
 #!/usr/bin/env python3
 """
-Mod By: INTELEON404
+RevLookup v2.1 - INTELEON404 
 GitHub: https://github.com/INTELEON404
 """
-
-import argparse
-import socket
-import threading
-import ipaddress
-import re
-import sys
+import threading, argparse, pyfiglet, ipaddress, socket, re, time
 from pathlib import Path
 
-# ==================== YOUR ART + CREDITS ====================
-print("""
-┏━┓┏━╸╻ ╻╻  ┏━┓┏━┓╻┏ ╻ ╻┏━┓
-┣┳┛┣╸ ┃┏┛┃  ┃ ┃┃ ┃┣┻┓┃ ┃┣━┛
-╹┗╸┗━╸┗┛ ┗━╸┗━┛┗━┛╹ ╹┗━┛╹  
+def banner():
+    print("\033[96m")
+    print(pyfiglet.figlet_format("RevLookup"))
+    print("\033[93m[+] Version: 2.1")
+    print("[+] Mod by: INTELEON404")
+    print("[+] GitHub: https://github.com/INTELEON404\n")
+    time.sleep(1.5)
 
-          Dev By: HunterDep
-          Mod By: INTELEON404
-          GitHub: https://github.com/INTELEON404
-""")
-# ===========================================================
-
-seen = set()
-seen_lock = threading.Lock()
-
-def to_ips(target: str) -> list[str]:
-    target = target.strip()
-    if re.fullmatch(r"\d{1,3}(\.\d{1,3}){3}", target):
-        return [target]
+def rev(ip):
     try:
-        return list({ip for ip in socket.gethostbyname_ex(target)[2]})
+        host = socket.gethostbyaddr(ip.strip())[0]
+        print(f"\033[92m{host}\033[0m")
+        if args.output:
+            with open(args.output, "a", encoding="utf-8") as f:
+                f.write(host + "\n")
     except:
-        return []
+        pass
 
-def rev(ip: str) -> str | None:
-    try:
-        return socket.gethostbyaddr(ip)[0]
-    except:
-        return None
+# =================== Args ===================
+parser = argparse.ArgumentParser(description="RevLookup v3.0 - INTELEON404")
+parser.add_argument("-t", "--target", help="Single IP or domain (ex: 1.1.1.1 or google.com)")
+parser.add_argument("-f", "--file", help="File with IPs, domains or CIDRs (one per line)")
+parser.add_argument("-c", "--cidr", help="CIDR range (ex: 192.168.1.0/24)")
+parser.add_argument("-o", "--output", help="Save results to file")
+parser.add_argument("-td", "--threads", type=int, default=1000, help="Max threads (default: 1000)")
+parser.add_argument("-s", "--silent", action="store_true", help="No banner")
+args = parser.parse_args()
 
-def worker(ip: str, out_file: Path | None, unique: bool):
-    name = rev(ip)
-    if not name:
-        return
-    if unique:
-        with seen_lock:
-            if name in seen:
-                return
-            seen.add(name)
-    print(name)
-    if out_file:
-        with open(out_file, "a", encoding="utf-8") as f:
-            f.write(name + "\n")
+socket.setdefaulttimeout(7)
 
-def main():
-    parser = argparse.ArgumentParser(
-        prog="revlookup",
-        description="RevLookup v2.1 — INTELEON404",
-        add_help=False,
-        formatter_class=argparse.RawTextHelpFormatter,
-        usage="revlookup (-t TARGET | -f FILE | -c CIDR) [-o OUTPUT] [-u] [-td N] [-h]"
-    )
+if not args.silent:
+    banner()
 
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-t", "--target", metavar="TARGET", help="Single IP or domain")
-    group.add_argument("-f", "--file", metavar="FILE", help="File with targets")
-    group.add_argument("-c", "--cidr", metavar="CIDR", help="CIDR range")
+if sum(bool(x) for x in [args.target, args.file, args.cidr]) != 1:
+    print("\033[91m[!] Use only one: -t / -f / -c\033[0m")
+    exit()
 
-    parser.add_argument("-o", "--output", metavar="OUTPUT", help="Save results to file")
-    parser.add_argument("-u", "--unique", action="store_true", help="Show only unique hostnames")
-    parser.add_argument("-td", "--threads", type=int, default=404, metavar="N", help="Max threads (default: 404)")
-    parser.add_argument("-h", "--help", action="help", help="show this help message and exit")
+max_threads = max(1, min(5000, args.td))
+sem = threading.Semaphore(max_threads)
+threads = []
 
-    args = parser.parse_args()
+def start(ip):
+    with sem:
+        rev(ip)
 
-    targets = []
-
-    if args.target:
-        targets = to_ips(args.target)
-    elif args.cidr:
+# =================== Single target ===================
+if args.target:
+    # Auto-resolve domain → IP(s)
+    if not re.match(r"^\d+\.\d+\.\d+\.\d+$", args.target):
         try:
-            targets = [str(ip) for ip in ipaddress.ip_network(args.cidr, strict=False).hosts()]
+            ips = socket.gethostbyname_ex(args.target)[2]
+            for ip in ips:
+                t = threading.Thread(target=start, args=(ip,))
+                t.start()
+                threads.append(t)
         except:
-            sys.exit(1)
-    elif args.file:
-        path = Path(args.file)
-        if not path.exists():
-            sys.exit(1)
-        for line in path.read_text().splitlines():
-            line = line.strip()
-            if not line or line.startswith("#"):
+            print(f"\033[91m[!] Cannot resolve: {args.target}\033[0m")
+    else:
+        t = threading.Thread(target=start, args=(args.target,))
+        t.start()
+        threads.append(t)
+
+# =================== CIDR ===================
+elif args.cidr:
+    try:
+        net = ipaddress.ip_network(args.cidr, strict=False)
+        for ip in net.hosts():
+            t = threading.Thread(target=start, args=(str(ip),))
+            t.start()
+            threads.append(t)
+    except:
+        print("\033[91m[!] Invalid CIDR\033[0m")
+        exit()
+
+# =================== File input ===================
+elif args.file:
+    path = Path(args.file)
+    if not path.exists():
+        print(f"\033[91m[!] File not found: {args.file}\033[0m")
+        exit()
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+
+        if "/" in line:  # CIDR in file
+            try:
+                net = ipaddress.ip_network(line, strict=False)
+                for ip in net.hosts():
+                    t = threading.Thread(target=start, args=(str(ip),))
+                    t.start()
+                    threads.append(t)
+            except:
                 continue
-            if "/" in line:
-                try:
-                    targets.extend(str(ip) for ip in ipaddress.ip_network(line, strict=False).hosts())
-                except:
-                    continue
-            else:
-                targets.extend(to_ips(line))
-
-    if not targets:
-        sys.exit(0)
-
-    out = Path(args.output).expanduser() if args.output else None
-    if out:
-        out.write_text("", encoding="utf-8")
-
-    thread_count = max(1, min(5000, args.threads))
-    sem = threading.Semaphore(thread_count)
-    threads = []
-
-    for ip in targets:
-        with sem:
-            t = threading.Thread(target=worker, args=(ip, out, args.unique))
-            t.daemon = True
+        else:
+            # IP or domain
+            t = threading.Thread(target=start, args=(line,))
             t.start()
             threads.append(t)
 
-    for t in threads:
-        t.join()
+# =================== Wait & finish ===================
+for t in threads:
+    t.join()
 
-if __name__ == "__main__":
-    if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
-        main()
-    else:
-        main()
+print("\n\033[96m[+] Done. All hosts resolved.\033[0m")
+print("\033[93m    ~ INTELEON404\033[0m")
