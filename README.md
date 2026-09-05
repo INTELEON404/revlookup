@@ -1,132 +1,149 @@
 <div align="center">
-  <img src="https://github.com/INTELEON404/Template/blob/main/reLookup.png" alt="Logo" />
+
+<img src="https://github.com/INTELEON404/Template/blob/main/reLookup.png" alt="RevLookup" />
+
+# REVLOOKUP
+
+**Lightweight Reverse DNS / PTR Lookup CLI**
+
+[![Python](https://img.shields.io/badge/Python-3.6%2B-blue)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+
 </div>
-
-## REVLOOKUP — HUNTER EDITION
-
-```ascii
-░█▀▄░█▀▀░█░█░█░░░█▀█░█▀█░█░█░█░█░█▀█
-░█▀▄░█▀▀░▀▄▀░█░░░█░█░█░█░█▀▄░█░█░█▀▀
-░▀░▀░▀▀▀░░▀░░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀▀▀░▀░░
-```
 
 ---
 
-**Fast, clean, multi-threaded reverse DNS lookup tool** – built for pure output and maximum usability.  
-No banners during scan (optional), no verbose noise. Just hostnames.
+## Overview
 
-**Original concept:** [HunterDep](https://github.com/yHunterDep).
-**Fully rewritten, optimized by:** [INTELEON404](https://github.com/INTELEON404)  
-**Current version:** **1.2** (November 2025)  
-**Language:** Python 3.6+  
+RevLookup is a lightweight, multi-threaded **Reverse DNS / PTR lookup** utility written in Python.
 
-[![Python 3.6+](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+It supports:
 
-## Highlights
+* IPv4
+* IPv6
+* Domains
+* CIDR ranges
+* Mixed target files
+* Multi-threaded lookups
+* Progress display
+* Result file output
+* Silent mode
 
-| Feature                     | RevLookup v1.2                        |
-|-----------------------------|-----------------------------------------|
-| Threading                   | Up to **5000** concurrent threads       |
-| Output                      | Hostnames only (clean)                  |
-| Input types                 | IP • Domain • CIDR • File (mixed)       |
-| Unique filtering            | `-u` (optional)                         |
-| File output                 | `-o filename`                           |
-| Banner                      | Shown by default • disable with `--silent` |
-| Dependencies                | Standard library + `pyfiglet` only      |
-
-## Features
-
-- Blazing-fast multi-threaded reverse DNS lookups
-- Flexible thread control (`-td N`, max 5000)
-- Supports single targets, full CIDR ranges, or mixed input files
-- Optional unique hostname deduplication
-- Zero bloat – lightweight and dependency-minimal
-- Clean, distraction-free output
+No external dependencies are required.
 
 ## Installation
 
-### Option 1: Clone the repository
 ```bash
-git clone https://github.com/INTELEON404/RevLookup.git
-cd RevLookup
+git clone https://github.com/INTELEON404/revlookup.git
+cd revlookup
 chmod +x revlookup
-sudo mv revlookup /usr/local/bin/
+sudo cp revlookup /usr/local/bin/
 ```
 
-### Option 2: One-liner (single file)
+
+Run directly:
+
 ```bash
-wget https://raw.githubusercontent.com/INTELEON404/RevLookup/main/revlookup -O revlookup
-chmod +x revlookup
-sudo mv revlookup /usr/local/bin/
+python3 revlookup -t 8.8.8.8
 ```
 
-**Requirements:** Python 3.6 or higher
+## Usage
 
-## Usage Examples
+### IPv4
 
 ```bash
-# Single IP or domain
+revlookup -t 8.8.8.8
+```
+
+### IPv6
+
+```bash
+revlookup -t 2001:4860:4860::8888
+```
+
+### Domain
+
+```bash
 revlookup -t google.com
-revlookup -t 1.1.1.1
+```
 
-# Full CIDR range
-revlookup -c 13.35.0.0/16
+### CIDR
 
-# From file (supports mixed IPs/domains/CIDRs)
+```bash
+revlookup -c 8.8.8.0/24
+```
+
+### Input File
+
+```bash
 revlookup -f targets.txt
-
-# Max performance + unique results + save output
-revlookup -f targets.txt -u -td 4000 -o hostnames.txt
-
-# No banner (quiet mode)
-revlookup -t 8.8.8.8 --silent
 ```
 
-### Full Help Menu
-```bash
-revlookup -h
-```
-
-```
-usage: revlookup (-t TARGET | -f FILE | -c CIDR) [-o OUTPUT] [-u] [-td N] [--silent] [-h]
-
-options:
-  -t, --target TARGET      Single IP or domain
-  -f, --file FILE          File with targets (one per line)
-  -c, --cidr CIDR          CIDR range (e.g. 192.168.0.0/16)
-  -o, --output OUTPUT      Save results to file
-  -u, --unique             Output only unique hostnames
-  -td, --threads N         Number of threads (default: 1000, max: 5000)
-  --silent                 Suppress banner
-  -h, --help               Show this help message and exit
-```
-
-## Example Output
+### Custom Threads
 
 ```bash
-$ revlookup -t google.com
-
-┏━┓┏━╸╻ ╻╻  ┏━┓┏━┓╻┏ ╻ ╻┏━┓
-┣┳┛┣╸ ┃┏┛┃  ┃ ┃┃ ┃┣┻┓┃ ┃┣━┛
-╹┗╸┗━╸┗┛ ┗━╸┗━┛┗━┛╹ ╹┗━┛╹
-
-hkg07s52-in-f14.1e100.net
-lga34s22-in-f4.1e100.net
-syd09s23-in-f14.1e100.net
-fra16s62-in-f14.1e100.net
-mad08s15-in-f3.1e100.net
+revlookup -f targets.txt -td 500
 ```
 
-## Contributing
+### Save Results
 
-Pull requests are welcome! For major changes, please open an issue first.
+```bash
+revlookup -t 8.8.8.8 -o results.txt
+```
 
-## License
+### Silent Mode
 
-[MIT License](LICENSE) © 2025 INTELEON404
+```bash
+revlookup -t 8.8.8.8 -s
+```
 
----
+## Options
 
-**Star this repo if you find it useful!** 🚀  
-GitHub: https://github.com/INTELEON404/RevLookup
+| Option           | Description                            |
+| ---------------- | -------------------------------------- |
+| `-t, --target`   | Single IP address or domain            |
+| `-f, --file`     | File containing IPs, domains, or CIDRs |
+| `-c, --cidr`     | CIDR range                             |
+| `-o, --output`   | Save successful results to a file      |
+| `-td, --threads` | Number of worker threads               |
+| `-s, --silent`   | Disable banner and progress display    |
+| `-h, --help`     | Show help message                      |
+
+**Default threads:** `100`
+**Maximum threads:** `5000`
+**Maximum CIDR expansion:** `65,536` addresses
+
+## Input File
+
+Targets are supplied one per line.
+
+```text
+8.8.8.8
+1.1.1.1
+2001:4860:4860::8888
+google.com
+8.8.8.0/24
+```
+
+Blank lines and lines beginning with `#` are ignored.
+
+## Output
+
+Successful lookups are printed as:
+
+```text
+8.8.8.8 -> dns.google
+1.1.1.1 -> one.one.one.one
+```
+
+With `-o`:
+
+```text
+8.8.8.8	dns.google
+1.1.1.1	one.one.one.one
+```
+
+## Requirements
+
+* Python 3.6+
+* No external dependencies
