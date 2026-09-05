@@ -3,170 +3,297 @@ import argparse
 import ipaddress
 import socket
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
+from threading import Lock
+from typing import Iterator, List, Optional
+
 
 __version__ = "1.3"
 __project__ = "revlookup"
 __author__ = "INTELEON404"
 
-MAX_IPV4_HOSTS = 65536
-MAX_IPV6_HOSTS = 65536
+
 DEFAULT_THREADS = 100
 MAX_THREADS = 5000
 
-def resolve(host):
-    """Resolve domain to IPv4/IPv6 addresses in deterministic order."""
+output_lock = Lock()
+
+
+def resolve(host: str) -> List[str]:
+    """Resolve a domain to unique IPv4/IPv6 addresses."""
     try:
-        addrs = socket.getaddrinfo(host, 0)
+        addresses = socket.getaddrinfo(host, 0)
         seen = set()
-        result = []
-        for addr in addrs:
-            ip = addr[4][0]
+        results = []
+        for address in addresses:
+            ip = address[4][0]
             if ip not in seen:
                 seen.add(ip)
-                result.append(ip)
-        return result
+                results.append(ip)
+        return results
     except (socket.gaierror, OSError):
         return []
 
-def ptr(ip):
+
+def ptr(ip: str) -> Optional[str]:
     """Perform reverse DNS lookup."""
     try:
         return socket.gethostbyaddr(ip)[0]
     except (socket.herror, socket.gaierror, OSError):
         return None
 
-def load_targets(args):
-    """Expand all input sources into a deduplicated IP list."""
+
+def get_raw_items(args: argparse.Namespace) -> List[str]:
+    """Extract raw input strings from arguments."""
     raw = []
     if args.target:
         raw = [args.target]
     elif args.file:
         try:
-            raw = [l.strip() for l in Path(args.file).read_text(encoding="utf-8").splitlines()
-                   if l.strip() and not l.strip().startswith('#')]
-        except OSError as e:
-            print(f"[!] Cannot read file: {e}", file=sys.stderr)
-            sys.exit(1)
+            raw = [
+                line.strip()
+                for line in Path(args.file).read_text(encoding="utf-8").splitlines()
+                if line.strip() and not line.strip().startswith("#")
+            ]
+        except OSError:
+            pass
     elif args.cidr:
         raw = [args.cidr]
+    return raw
 
-    ips = []
-    seen = set()
-    for item in raw:
-        if '/' in item:
-            try:
-                net = ipaddress.ip_network(item, strict=False)
-                limit = MAX_IPV4_HOSTS if net.version == 4 else MAX_IPV6_HOSTS
-                if net.num_addresses > limit:
-                    print(f"[!] CIDR too large: {item}", file=sys.stderr)
+
+class TargetManager:
+    """Manages deduplicated target generation and dynamic total estimation."""
+
+    def __init__(self, raw: List[str]):
+        self.raw = raw
+        self.total = self._estimate(raw)
+        self.seen = set()
+
+    def _estimate(self, raw: List[str]) -> int:
+        """Estimate the maximum number of targets to process for the progress bar."""
+        t = 0
+        for item in raw:
+            if "/" in item:
+                try:
+                    net = ipaddress.ip_network(item, strict=False)
+                    if net.prefixlen == net.max_prefixlen:
+                        t += 1
+                    else:
+                        if net.version == 4:
+                            t += max(0, net.num_addresses - 2)
+                        else:
+                            t += max(0, net.num_addresses - 1)
+                except ValueError:
+                    pass
+            else:
+                try:
+                    ipaddress.ip_address(item)
+                    t += 1
+                except ValueError:
+                    # Domain estimate: counts as at least 1 resolution attempt
+                    t += 1
+        return t
+
+    def generate(self) -> Iterator[str]:
+        """Yield targets while maintaining exact total count and uniqueness."""
+        for item in self.raw:
+            # Handle CIDR ranges
+            if "/" in item:
+                try:
+                    net = ipaddress.ip_network(item, strict=False)
+                    if net.prefixlen == net.max_prefixlen:
+                        ip = str(net.network_address)
+                        if ip not in self.seen:
+                            self.seen.add(ip)
+                            yield ip
+                        else:
+                            self.total -= 1
+                    else:
+                        for address in net.hosts():
+                            ip = str(address)
+                            if ip not in self.seen:
+                                self.seen.add(ip)
+                                yield ip
+                            else:
+                                self.total -= 1
+                except ValueError:
+                    pass
+            
+            # Handle direct IPs or Domains
+            else:
+                try:
+                    ip = str(ipaddress.ip_address(item))
+                    if ip not in self.seen:
+                        self.seen.add(ip)
+                        yield ip
+                    else:
+                        self.total -= 1
                     continue
-                for addr in net.hosts():
-                    s = str(addr)
-                    if s not in seen:
-                        seen.add(s)
-                        ips.append(s)
-            except ValueError:
-                print(f"[!] Invalid CIDR: {item}", file=sys.stderr)
-            continue
+                except ValueError:
+                    pass
 
-        try:
-            ipaddress.ip_address(item)
-            if item not in seen:
-                seen.add(item)
-                ips.append(item)
-            continue
-        except ValueError:
-            pass
+                # Domain resolution
+                resolved = resolve(item)
+                added = 0
+                for ip in resolved:
+                    if ip not in self.seen:
+                        self.seen.add(ip)
+                        yield ip
+                        added += 1
+                
+                # Correct the initial +1 domain estimate if it resolved to multiple/zero IPs
+                self.total += (added - 1)
 
-        resolved = resolve(item)
-        if not resolved:
-            print(f"[!] Cannot resolve: {item}", file=sys.stderr)
-            continue
-        for ip in resolved:
-            if ip not in seen:
-                seen.add(ip)
-                ips.append(ip)
 
-    return ips
+def draw_progress(done: int, total: int, found: int) -> None:
+    """Render a thin in-place progress indicator."""
+    if total <= 0:
+        return
 
-def draw_bar(done, total, found, failed, file=sys.stderr):
-    """Render a simple progress bar to stderr."""
-    pct = done * 100 // total
-    bar = "●" * (pct // 10) + "○" * (10 - pct // 10)
-    print(f"\r[{bar}] {pct}% | {done}/{total} | Found: {found} | Failed: {failed}",
-          end="", flush=True, file=file)
+    percent = min(100, done * 100 // total)
+    filled = (percent * 20) // 100
+    empty = 20 - filled
 
-def main():
+    bar = "█" * filled + "░" * empty
+
+    status = (
+        f"▌ {percent:3d}% │ "
+        f"{bar} │ "
+        f"{done}/{total} │ "
+        f"{found} found"
+    )
+
+    sys.stderr.write(f"\r\033[2K{status}")
+    sys.stderr.flush()
+
+
+def clear_progress() -> None:
+    """Completely remove the current progress line."""
+    sys.stderr.write("\r\033[2K\r")
+    sys.stderr.flush()
+
+
+def write_result(line: str, output) -> None:
+    """Write a result immediately to stdout and file safely across threads."""
+    with output_lock:
+        sys.stdout.write(f"{line}\n")
+        sys.stdout.flush()
+        if output:
+            output.write(f"{line}\n")
+            output.flush()
+
+
+def main() -> int:
+    """Main entry point."""
     parser = argparse.ArgumentParser(
-        description=f"{__project__} v{__version__} - Reverse DNS lookup",
+        prog=__project__,
+        description=f"{__project__} - Concurrent reverse DNS lookup",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    g = parser.add_mutually_exclusive_group(required=True)
-    g.add_argument("-t", "--target", help="Single IP or domain")
-    g.add_argument("-f", "--file", help="File with IPs/domains/CIDRs")
-    g.add_argument("-c", "--cidr", help="CIDR range (e.g. 8.8.8.0/24)")
-    parser.add_argument("-o", "--output", help="Save results to file")
-    parser.add_argument("-td", "--threads", type=int, default=DEFAULT_THREADS,
-                        help=f"Max worker threads (default: {DEFAULT_THREADS})")
-    parser.add_argument("-s", "--silent", action="store_true", help="No banner/progress")
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-t", "--target", metavar="IP/DOMAIN", help="Single IP or domain")
+    group.add_argument("-f", "--file", metavar="FILE", help="File with IPs, domains, or CIDRs")
+    group.add_argument("-c", "--cidr", metavar="CIDR", help="CIDR range (e.g., 8.8.8.0/24)")
+    
+    parser.add_argument("-o", "--output", metavar="FILE", help="Save results to file")
+    
+    parser.add_argument(
+        "-td", "--threads", type=int, default=DEFAULT_THREADS, metavar="N",
+        help=f"Worker threads (default: {DEFAULT_THREADS}, max: {MAX_THREADS})"
+    )
+    
+    parser.add_argument("-s", "--silent", action="store_true", help="Disable progress output")
+    parser.add_argument("-v", "--version", action="version", version=f"{__project__} v{__version__}")
+
     args = parser.parse_args()
-
-    if not args.silent:
-        print(f"{__project__} v{__version__}", file=sys.stderr)
-
     args.threads = max(1, min(MAX_THREADS, args.threads))
-    targets = load_targets(args)
 
-    if not targets:
-        print("[!] No valid targets", file=sys.stderr)
-        sys.exit(1)
+    raw_items = get_raw_items(args)
+    manager = TargetManager(raw_items)
 
-    if not args.silent:
-        print(f"[+] Scanning {len(targets)} target(s) with {args.threads} worker(s)...",
-              file=sys.stderr)
+    if manager.total <= 0:
+        return 1
 
-    total = len(targets)
-    found = failed = 0
-    out = None
+    targets_iter = manager.generate()
+
+    completed = 0
+    found = 0
+    output = None
+
     if args.output:
         try:
-            out = open(args.output, "w", encoding="utf-8", buffering=1)
-        except OSError as e:
-            print(f"[!] Cannot open output file: {e}", file=sys.stderr)
-            sys.exit(1)
+            output = open(args.output, "w", encoding="utf-8", buffering=1)
+        except OSError:
+            return 1
 
-    is_tty = sys.stderr.isatty() and not args.silent
+    is_tty = sys.stdout.isatty() and sys.stderr.isatty() and not args.silent
 
     try:
-        with ThreadPoolExecutor(max_workers=args.threads) as ex:
-            futures = {ex.submit(ptr, ip): ip for ip in targets}
-            for fut in as_completed(futures):
-                ip = futures[fut]
-                host = fut.result()
-                if host:
-                    found += 1
-                    print(f"{ip} -> {host}")
-                    if out:
-                        out.write(f"{ip}\t{host}\n")
-                else:
-                    failed += 1
+        if is_tty:
+            draw_progress(0, manager.total, 0)
 
+        with ThreadPoolExecutor(max_workers=args.threads) as executor:
+            # Dictionary maps Future -> IP address
+            pending = {}
+
+            # Pre-fill initial workload bounding max memory
+            for _ in range(args.threads):
+                try:
+                    ip = next(targets_iter)
+                    pending[executor.submit(ptr, ip)] = ip
+                except StopIteration:
+                    break
+
+            # Sliding window execution
+            while pending:
+                done, _ = wait(pending.keys(), return_when=FIRST_COMPLETED)
+
+                for future in done:
+                    ip = pending.pop(future)
+                    try:
+                        host = future.result()
+                    except Exception:
+                        host = None
+
+                    completed += 1
+
+                    if host:
+                        found += 1
+                        if is_tty:
+                            clear_progress()
+                            
+                        # Format output: Pad IP string to 15 chars for clean alignment
+                        write_result(f"{ip:<15} → {host}", output)
+
+                    # Replenish queue
+                    try:
+                        next_ip = next(targets_iter)
+                        pending[executor.submit(ptr, next_ip)] = next_ip
+                    except StopIteration:
+                        pass
+                
                 if is_tty:
-                    draw_bar(found + failed, total, found, failed)
+                    draw_progress(completed, manager.total, found)
 
         if is_tty:
-            print(file=sys.stderr)
+            clear_progress()
+            
+        sys.stdout.flush()
 
     except KeyboardInterrupt:
         if is_tty:
-            print(file=sys.stderr)
-        print("[!] Interrupted by user", file=sys.stderr)
-        sys.exit(130)
+            clear_progress()
+        return 130
+
     finally:
-        if out:
-            out.close()
+        if output:
+            output.close()
+
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
